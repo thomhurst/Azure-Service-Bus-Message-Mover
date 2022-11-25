@@ -1,6 +1,5 @@
 ﻿using Azure.Messaging.ServiceBus;
 using Microsoft.Extensions.Logging;
-using TomLonghurst.AzureServiceBus.MessageMover.Extensions;
 using TomLonghurst.AzureServiceBus.MessageMover.Options;
 
 namespace TomLonghurst.AzureServiceBus.MessageMover.Services;
@@ -12,7 +11,6 @@ public class MessageMoverWorker
     private readonly IServiceBusSenderCreator _serviceBusSenderCreator;
     private readonly IMessageMapper _messageMapper;
     private readonly ILogger<MessageMoverWorker> _logger;
-    private readonly CancellationTokenSource _backgroundWorkersCancellationTokenSource = new();
     private DateTime _lastTick;
 
     public MessageMoverWorker(MessageMoverOptions managerOptions,
@@ -32,8 +30,6 @@ public class MessageMoverWorker
     {
         var receiver = _serviceBusReceiverCreator.CreateReceiverProcessor();
 
-        var messageProcessorCancellationTokenSource = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-
         var sender = _serviceBusSenderCreator.CreateSender();
         
         _lastTick = DateTime.UtcNow;
@@ -41,17 +37,11 @@ public class MessageMoverWorker
         receiver.ProcessMessageAsync += Process(receiver, sender);
         receiver.ProcessErrorAsync += ErrorHandler();
 
-        PollForMessageCompletion(messageProcessorCancellationTokenSource);
-
         await receiver.StartProcessingAsync(cancellationToken);
 
-        await messageProcessorCancellationTokenSource.Token.WaitForCancellation();
+        await PollForMessageCompletion();
 
         await receiver.DisposeAsync();
-
-        _backgroundWorkersCancellationTokenSource.Cancel();
-        _backgroundWorkersCancellationTokenSource.Dispose();
-        
         await sender.DisposeAsync();
     }
 
@@ -114,23 +104,22 @@ public class MessageMoverWorker
         };
     }
 
-    private void PollForMessageCompletion(CancellationTokenSource messageProcessorCancellationTokenSource)
+    private Task PollForMessageCompletion()
     {
         var periodicTimer = new PeriodicTimer(TimeSpan.FromSeconds(30));
         
-        Task.Run(async () =>
+        return Task.Factory.StartNew(async () =>
         {
-            while (await periodicTimer.WaitForNextTickAsync(_backgroundWorkersCancellationTokenSource.Token))
+            while (await periodicTimer.WaitForNextTickAsync())
             {
                 _logger.LogDebug("Checking if messages have stopped processing");
                 if (DateTime.UtcNow - _lastTick > TimeSpan.FromSeconds(30))
                 {
                     _logger.LogInformation("No more messages found... Stopping processor");
-                    messageProcessorCancellationTokenSource.Cancel();
                     periodicTimer.Dispose();
                     return;
                 }
             }
-        }, _backgroundWorkersCancellationTokenSource.Token);
+        }, TaskCreationOptions.LongRunning);
     }
 }
