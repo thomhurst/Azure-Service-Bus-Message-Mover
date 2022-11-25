@@ -38,7 +38,7 @@ public class MessageMoverWorker
         
         _lastTick = DateTime.UtcNow;
 
-        receiver.ProcessMessageAsync += Process(sender);
+        receiver.ProcessMessageAsync += Process(receiver, sender);
         receiver.ProcessErrorAsync += ErrorHandler();
 
         PollForMessageCompletion(messageProcessorCancellationTokenSource);
@@ -64,7 +64,8 @@ public class MessageMoverWorker
         };
     }
 
-    private Func<ProcessMessageEventArgs, Task> Process(ServiceBusSender sender)
+    private Func<ProcessMessageEventArgs, Task> Process(ServiceBusProcessor serviceBusProcessor,
+        ServiceBusSender sender)
     {
         var messagesProcessedCount = 0;
         
@@ -77,6 +78,7 @@ public class MessageMoverWorker
             {
                 _logger.LogInformation("Skipping message as user defined limit has been reached. Limit: {Limit} | Current Message Count: {CurrentMessageCount}", _managerOptions.MessagesToProcess, messageCount);
                 await args.AbandonMessageAsync(args.Message, cancellationToken: args.CancellationToken);
+                await serviceBusProcessor.CloseAsync();
                 return;
             }
 
