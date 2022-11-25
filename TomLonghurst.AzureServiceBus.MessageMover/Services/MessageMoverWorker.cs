@@ -41,8 +41,13 @@ public class MessageMoverWorker
 
         await PollForMessageCompletion();
 
-        await receiver.DisposeAsync();
-        await sender.DisposeAsync();
+        Dispose(receiver, sender);
+    }
+
+    private static void Dispose(IAsyncDisposable receiver, IAsyncDisposable sender)
+    {
+        Task.Run(receiver.DisposeAsync);
+        Task.Run(sender.DisposeAsync);
     }
 
     private Func<ProcessErrorEventArgs,Task> ErrorHandler()
@@ -106,7 +111,7 @@ public class MessageMoverWorker
 
     private async Task PollForMessageCompletion()
     {
-        var periodicTimer = new PeriodicTimer(TimeSpan.FromSeconds(30));
+        var periodicTimer = new PeriodicTimer(TimeSpan.FromSeconds(5));
 
         while (await periodicTimer.WaitForNextTickAsync())
         {
