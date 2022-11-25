@@ -6,4 +6,5 @@ public interface IReceiverOptions
 {
     public ServiceBusClient Client { get; }
     public SubQueue SubQueue { get; }
+    int? Concurrency { get; }
 }

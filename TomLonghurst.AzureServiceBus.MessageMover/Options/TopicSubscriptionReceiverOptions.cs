@@ -8,4 +8,5 @@ public record TopicSubscriptionReceiverOptions : IReceiverOptions
     public required string TopicName { get; init; }
     public required string SubscriptionName { get; init; }
     public required SubQueue SubQueue { get; init; }
+    public int? Concurrency { get; init; }
 }

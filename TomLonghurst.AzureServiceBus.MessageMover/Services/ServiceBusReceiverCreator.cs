@@ -21,7 +21,8 @@ public class ServiceBusReceiverCreator : IServiceBusReceiverCreator
         {
             ReceiveMode = ServiceBusReceiveMode.PeekLock, 
             SubQueue = _messageMoverOptions.ReceiverOptions.SubQueue,
-            AutoCompleteMessages = false
+            AutoCompleteMessages = false,
+            MaxConcurrentCalls = _messageMoverOptions.ReceiverOptions.Concurrency ?? 1
         };
 
         return _messageMoverOptions.ReceiverOptions switch

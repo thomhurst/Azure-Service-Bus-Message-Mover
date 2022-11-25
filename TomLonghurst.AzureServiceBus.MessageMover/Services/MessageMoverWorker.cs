@@ -111,6 +111,8 @@ public class MessageMoverWorker
 
     private async Task PollForMessageCompletion()
     {
+        await Task.Delay(TimeSpan.FromSeconds(25));
+        
         var periodicTimer = new PeriodicTimer(TimeSpan.FromSeconds(5));
 
         while (await periodicTimer.WaitForNextTickAsync())
