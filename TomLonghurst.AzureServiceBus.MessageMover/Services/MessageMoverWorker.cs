@@ -39,6 +39,7 @@ public class MessageMoverWorker
         _lastTick = DateTime.UtcNow;
 
         receiver.ProcessMessageAsync += Process(sender);
+        receiver.ProcessErrorAsync += ErrorHandler();
 
         PollForMessageCompletion(messageProcessorCancellationTokenSource);
 
@@ -52,6 +53,15 @@ public class MessageMoverWorker
         _backgroundWorkersCancellationTokenSource.Dispose();
         
         await sender.DisposeAsync();
+    }
+
+    private Func<ProcessErrorEventArgs,Task> ErrorHandler()
+    {
+        return args =>
+        {
+            _logger.LogError(args.Exception, "An error occurred");
+            return Task.CompletedTask;
+        };
     }
 
     private Func<ProcessMessageEventArgs, Task> Process(ServiceBusSender sender)
