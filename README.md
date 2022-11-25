@@ -107,8 +107,8 @@ services.AddAzureServiceBusMessageMover(sp => new MessageMoverOptions
 
 ### Move across the different service buses
 ```csharp
-var receiverClient = new ServiceBusClient(myconnectionstring);
-var senderClient = new ServiceBusClient(myconnectionstring);
+var receiverClient = new ServiceBusClient(connectionstring1);
+var senderClient = new ServiceBusClient(connectionstring2);
 services.AddAzureServiceBusMessageMover(sp => new MessageMoverOptions
   {
     ReceiverOptions = new TopicSubscriptionReceiverOptions // or new QueueReceiverOptions
