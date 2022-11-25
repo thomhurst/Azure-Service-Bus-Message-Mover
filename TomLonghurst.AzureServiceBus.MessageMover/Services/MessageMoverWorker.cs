@@ -11,6 +11,8 @@ public class MessageMoverWorker
     private readonly IServiceBusSenderCreator _serviceBusSenderCreator;
     private readonly IMessageMapper _messageMapper;
     private readonly ILogger<MessageMoverWorker> _logger;
+    
+    private int _messagesProcessedCount;
     private DateTime _lastTick;
 
     public MessageMoverWorker(MessageMoverOptions managerOptions,
@@ -62,11 +64,9 @@ public class MessageMoverWorker
     private Func<ProcessMessageEventArgs, Task> Process(ServiceBusProcessor serviceBusProcessor,
         ServiceBusSender sender)
     {
-        var messagesProcessedCount = 0;
-        
         return async args =>
         {
-            var messageCount = Interlocked.Increment(ref messagesProcessedCount);
+            var messageCount = Interlocked.Increment(ref _messagesProcessedCount);
             
             if (_managerOptions.MessagesToProcess is > 0
                 && messageCount > _managerOptions.MessagesToProcess.Value)
@@ -74,6 +74,7 @@ public class MessageMoverWorker
                 _logger.LogInformation("Skipping message as user defined limit has been reached. Limit: {Limit} | Current Message Count: {CurrentMessageCount}", _managerOptions.MessagesToProcess, messageCount);
                 await args.AbandonMessageAsync(args.Message, cancellationToken: args.CancellationToken);
                 await serviceBusProcessor.CloseAsync();
+                Interlocked.Decrement(ref _messagesProcessedCount);
                 return;
             }
 
@@ -126,6 +127,8 @@ public class MessageMoverWorker
 
             _logger.LogInformation("No more messages found... Stopping processor");
             periodicTimer.Dispose();
+            
+            _logger.LogInformation("{Count} messages moved", _messagesProcessedCount);
             return;
         }
     }
