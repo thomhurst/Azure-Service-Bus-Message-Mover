@@ -28,7 +28,7 @@ public class MessageMoverWorker
         _logger = logger;
     }
 
-    public async Task DoWork(CancellationToken cancellationToken = default)
+    public async Task MoveMessages()
     {
         var receiver = _serviceBusReceiverCreator.CreateReceiverProcessor();
 
@@ -39,7 +39,7 @@ public class MessageMoverWorker
         receiver.ProcessMessageAsync += Process(receiver, sender);
         receiver.ProcessErrorAsync += ErrorHandler();
 
-        await receiver.StartProcessingAsync(cancellationToken);
+        await receiver.StartProcessingAsync();
 
         await PollForMessageCompletion();
 
