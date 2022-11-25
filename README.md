@@ -125,3 +125,21 @@ services.AddAzureServiceBusMessageMover(sp => new MessageMoverOptions
       }
   })
 ```
+
+### Map / Amend the Service Bus Message
+```csharp
+var receiverClient = new ServiceBusClient(connectionstring1);
+var senderClient = new ServiceBusClient(connectionstring2);
+services.AddAzureServiceBusMessageMover(sp => new MessageMoverOptions
+  {
+    ...
+      MessageMapper = oldMessage => new ServiceBusMessage("some new body")
+      {
+          ApplicationProperties =
+          {
+              ["Header1"] = oldMessage.ApplicationProperties["Header1"]
+          }
+      },
+    ...
+  })
+```
