@@ -71,9 +71,9 @@ public class MessageMoverWorker
             if (_managerOptions.MessagesToProcess is > 0
                 && messageCount > _managerOptions.MessagesToProcess.Value)
             {
-                _logger.LogInformation("Skipping message as user defined limit has been reached. Limit: {Limit} | Current Message Count: {CurrentMessageCount}", _managerOptions.MessagesToProcess, messageCount);
+                _logger.LogDebug("Skipping message as user defined limit has been reached. Limit: {Limit} | Current Message Count: {CurrentMessageCount}", _managerOptions.MessagesToProcess, messageCount);
                 Interlocked.Decrement(ref _messagesProcessedCount);
-                await args.AbandonMessageAsync(args.Message, cancellationToken: args.CancellationToken);
+                await args.AbandonMessageAsync(args.Message);
                 _ = serviceBusProcessor.StopProcessingAsync();
                 return;
             }
@@ -83,7 +83,7 @@ public class MessageMoverWorker
                 && sendCount >= 10)
             {
                 _logger.LogInformation("Skipping as message didn't succeed after 10 attempts");
-                await args.AbandonMessageAsync(args.Message, cancellationToken: args.CancellationToken);
+                await args.AbandonMessageAsync(args.Message);
                 return;
             }
 
@@ -94,8 +94,8 @@ public class MessageMoverWorker
 
             try
             {
-                await sender.SendMessageAsync(newMessage, args.CancellationToken);
-                await args.CompleteMessageAsync(args.Message, cancellationToken: args.CancellationToken);
+                await sender.SendMessageAsync(newMessage);
+                await args.CompleteMessageAsync(args.Message);
             }
             catch (Exception e)
             {
