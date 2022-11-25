@@ -104,22 +104,22 @@ public class MessageMoverWorker
         };
     }
 
-    private Task PollForMessageCompletion()
+    private async Task PollForMessageCompletion()
     {
         var periodicTimer = new PeriodicTimer(TimeSpan.FromSeconds(30));
-        
-        return Task.Factory.StartNew(async () =>
+
+        while (await periodicTimer.WaitForNextTickAsync())
         {
-            while (await periodicTimer.WaitForNextTickAsync())
+            _logger.LogDebug("Checking if messages have stopped processing");
+            
+            if (DateTime.UtcNow - _lastTick <= TimeSpan.FromSeconds(30))
             {
-                _logger.LogDebug("Checking if messages have stopped processing");
-                if (DateTime.UtcNow - _lastTick > TimeSpan.FromSeconds(30))
-                {
-                    _logger.LogInformation("No more messages found... Stopping processor");
-                    periodicTimer.Dispose();
-                    return;
-                }
+                continue;
             }
-        }, TaskCreationOptions.LongRunning);
+
+            _logger.LogInformation("No more messages found... Stopping processor");
+            periodicTimer.Dispose();
+            return;
+        }
     }
 }
