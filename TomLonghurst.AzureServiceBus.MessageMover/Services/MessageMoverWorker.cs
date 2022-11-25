@@ -72,9 +72,9 @@ public class MessageMoverWorker
                 && messageCount > _managerOptions.MessagesToProcess.Value)
             {
                 _logger.LogInformation("Skipping message as user defined limit has been reached. Limit: {Limit} | Current Message Count: {CurrentMessageCount}", _managerOptions.MessagesToProcess, messageCount);
+                Interlocked.Decrement(ref _messagesProcessedCount);
                 await args.AbandonMessageAsync(args.Message, cancellationToken: args.CancellationToken);
                 await serviceBusProcessor.CloseAsync();
-                Interlocked.Decrement(ref _messagesProcessedCount);
                 return;
             }
 
