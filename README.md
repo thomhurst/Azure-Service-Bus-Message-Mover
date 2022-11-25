@@ -7,10 +7,10 @@ Replay or Move Messages to different buses
 ## How to use
 
 ### Register Dependencies via Extension Method
-Call  `.AddAzureServiceBusMessageMover` on your ServiceCollection in Startup, passing in some configuration.
+Call  `.AddAzureServiceBusMessageMover` on your `ServiceCollection` in Startup, passing in some configuration.
 
 ```csharp
-.AddAzureServiceBusMessageMover(sp => new MessageMoverOptions
+services.AddAzureServiceBusMessageMover(sp => new MessageMoverOptions
   {
       ReceiverOptions = new TopicSubscriptionReceiverOptions // or new QueueReceiverOptions
       {
@@ -59,3 +59,69 @@ The replayer can:
 - Move messages on the same service bus, or between different service buses
 - Work out when the queue is empty and stop
 - Retry messages 10 times, and then give up on individual messages if they aren't succeeding
+
+## Examples
+
+### Replay a set count
+```csharp
+services.AddAzureServiceBusMessageMover(sp => new MessageMoverOptions
+  {
+      ...
+      MessagesToProcess = 10
+      ...
+  })
+```
+
+### Set a concurrency
+```csharp
+services.AddAzureServiceBusMessageMover(sp => new MessageMoverOptions
+  {
+    ReceiverOptions = new TopicSubscriptionReceiverOptions // or new QueueReceiverOptions
+      {
+          ...
+          Concurrency = 1000,
+          ...
+      }
+  })
+```
+
+### Move across the same service bus
+```csharp
+var client = new ServiceBusClient(myconnectionstring);
+services.AddAzureServiceBusMessageMover(sp => new MessageMoverOptions
+  {
+    ReceiverOptions = new TopicSubscriptionReceiverOptions // or new QueueReceiverOptions
+      {
+          ...
+          Client = client
+          ...
+      },
+    SenderOptions = new SenderOptions
+      {
+          ...
+          Client = client
+          ...
+      }
+  })
+```
+
+### Move across the different service buses
+```csharp
+var receiverClient = new ServiceBusClient(myconnectionstring);
+var senderClient = new ServiceBusClient(myconnectionstring);
+services.AddAzureServiceBusMessageMover(sp => new MessageMoverOptions
+  {
+    ReceiverOptions = new TopicSubscriptionReceiverOptions // or new QueueReceiverOptions
+      {
+          ...
+          Client = receiverClient
+          ...
+      },
+    SenderOptions = new SenderOptions
+      {
+          ...
+          Client = senderClient
+          ...
+      }
+  })
+```
