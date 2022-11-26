@@ -117,7 +117,7 @@ services.AddAzureServiceBusMessageMover(sp => new MessageMoverOptions
     ReceiverOptions = new TopicSubscriptionReceiverOptions // or new QueueReceiverOptions
       {
           ...
-          Client = receiverClient
+          Client = receiverClient,
           TopicName = "MyTopic",
           SubscriptionName = "MySubscription"
           ...
@@ -125,7 +125,7 @@ services.AddAzureServiceBusMessageMover(sp => new MessageMoverOptions
     SenderOptions = new SenderOptions
       {
           ...
-          Client = senderClient
+          Client = senderClient,
           TopicOrQueueName = "MyOtherServiceBusQueue"
           ...
       }
